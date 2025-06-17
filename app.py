@@ -74,10 +74,9 @@ def authenticate_gmail():
         redirect_uri=st.secrets["google"]["redirect_uri"]
     )
 
-    # ✅ Get query params correctly
+    # ✅ Modern query param API
     query_params = st.query_params
 
-    # ✅ Detect 'code' and handle string/list
     if "code" not in query_params:
         auth_url, _ = flow.authorization_url(
             prompt='consent',
@@ -85,19 +84,22 @@ def authenticate_gmail():
             include_granted_scopes='true'
         )
         st.markdown(f"[🔐 Click here to log in with your Gmail]({auth_url})")
+        st.markdown("After logging in, you'll be redirected here. If nothing loads, try refreshing.")
         st.stop()
     else:
-        # ✅ FIX: Support both list and str
+        # ✅ Handle list or string code
         code = query_params["code"]
         if isinstance(code, list):
             code = code[0]
+
         flow.fetch_token(code=code)
         credentials = flow.credentials
 
-        # ✅ Optional: Remove query params from the URL
-        st.experimental_set_query_params()
+        # ✅ Clear the query params from the URL
+        st.query_params.clear()
 
         return build('gmail', 'v1', credentials=credentials)
+
 
 # Fetch recent 100 emails
 def fetch_emails(service, max_results=100):
