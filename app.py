@@ -59,9 +59,7 @@ def get_credentials_dict():
             "redirect_uris": [st.secrets["google"]["redirect_uri"]]
         }
     }
-
 def authenticate_gmail():
-    # OAuth2 Flow
     flow = Flow.from_client_config(
         {
             "web": {
@@ -76,23 +74,29 @@ def authenticate_gmail():
         redirect_uri=st.secrets["google"]["redirect_uri"]
     )
 
-    # Step 1: Get code from URL if redirected
+    # ✅ Get query params correctly
     query_params = st.query_params
 
+    # ✅ Detect 'code' and handle string/list
     if "code" not in query_params:
-        auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', include_granted_scopes='true')
+        auth_url, _ = flow.authorization_url(
+            prompt='consent',
+            access_type='offline',
+            include_granted_scopes='true'
+        )
         st.markdown(f"[🔐 Click here to log in with your Gmail]({auth_url})")
-        st.stop()  # Wait for user to authenticate
+        st.stop()
     else:
-        # Step 2: Fetch token using the returned code
-        code = query_params["code"][0]
+        # ✅ FIX: Support both list and str
+        code = query_params["code"]
+        if isinstance(code, list):
+            code = code[0]
         flow.fetch_token(code=code)
         credentials = flow.credentials
 
-        # Optional: remove query params from URL after auth
+        # ✅ Optional: Remove query params from the URL
         st.experimental_set_query_params()
 
-        # Step 3: Return authenticated Gmail service
         return build('gmail', 'v1', credentials=credentials)
 
 # Fetch recent 100 emails
