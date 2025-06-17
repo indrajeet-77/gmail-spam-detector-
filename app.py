@@ -77,7 +77,8 @@ def authenticate_gmail():
     )
 
     # Step 1: Get code from URL if redirected
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params
+
     if "code" not in query_params:
         auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', include_granted_scopes='true')
         st.markdown(f"[🔐 Click here to log in with your Gmail]({auth_url})")
