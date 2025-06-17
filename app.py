@@ -12,6 +12,9 @@ from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 import os
 import pickle as pk
+from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
+from urllib.parse import urlencode
 
 # Gmail read-only scope
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
@@ -58,21 +61,38 @@ def get_credentials_dict():
     }
 
 def authenticate_gmail():
-    creds = None
-    if os.path.exists('token.pkl') and os.access('token.pkl', os.R_OK):
-        with open('token.pkl', 'rb') as token:
-            creds = pk.load(token)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_config(get_credentials_dict(), SCOPES)
-            creds = flow.run_local_server(port=8080)
-        with open('token.pkl', 'wb') as token:
-            pk.dump(creds, token)
-    service = build('gmail', 'v1', credentials=creds)
-    return service
+    # OAuth2 Flow
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": st.secrets["google"]["client_id"],
+                "client_secret": st.secrets["google"]["client_secret"],
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": [st.secrets["google"]["redirect_uri"]],
+            }
+        },
+        scopes=SCOPES,
+        redirect_uri=st.secrets["google"]["redirect_uri"]
+    )
 
+    # Step 1: Get code from URL if redirected
+    query_params = st.experimental_get_query_params()
+    if "code" not in query_params:
+        auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline', include_granted_scopes='true')
+        st.markdown(f"[🔐 Click here to log in with your Gmail]({auth_url})")
+        st.stop()  # Wait for user to authenticate
+    else:
+        # Step 2: Fetch token using the returned code
+        code = query_params["code"][0]
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+
+        # Optional: remove query params from URL after auth
+        st.experimental_set_query_params()
+
+        # Step 3: Return authenticated Gmail service
+        return build('gmail', 'v1', credentials=credentials)
 
 # Fetch recent 100 emails
 def fetch_emails(service, max_results=100):
