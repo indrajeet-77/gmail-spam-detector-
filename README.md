@@ -48,18 +48,23 @@ cd gmail-spam-detector
 ```
 
 2. **Create a virtual environment and activate it**
-
+```bash
 python -m venv venv 
 
 source venv/bin/activate   # or venv\Scripts\activate on Windows
+```
 
 3. **Install dependencies**
+```bash
 pip install -r requirements.txt
+```
 
-4. **Run the app**
+5. **Run the app**
+```bash
 streamlit run app.py
+```
 
-5. **Live Link** :
+7. **Live Link** :
 **Visit** :- https://email-spam-detectionn.streamlit.app/
 
 
