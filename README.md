@@ -59,12 +59,12 @@ source venv/bin/activate   # or venv\Scripts\activate on Windows
 pip install -r requirements.txt
 ```
 
-5. **Run the app**
+4. **Run the app**
 ```bash
 streamlit run app.py
 ```
 
-7. **Live Link** :
+5. **Live Link** :
 **Visit** :- https://email-spam-detectionn.streamlit.app/
 
 
